@@ -1,0 +1,14 @@
+1. This note is about OnboardingScreenDraft.png and some for the backend API.
+2. The fields on screen are some personal data and the position related data for the particular employee. There can be more fields as needed.
+3. There must be some kind of relevant validation for each of the fields on the screen.
+4. DOB should have a date picker so as for the user to correctly and conveniently select the date.
+5. Address field in this case should be expanded to contain individual fields for street, city, state, country and zip code.
+6. The position field should be a dropdown with the list of positions available at the organisation and the user should be able to select one of them.
+7. The salary field should be a number field with relevant validations.
+8. The start date is collected so that the salary can be calculated correctly in the real world even though it is currently not included in the calculation in the backend.
+9. The submit button should be disabled until all the fields are filled in correctly.
+10. Even though the backend API currently has the tax and super calculation, the CRUD for all the fields and the upcoming fields on the onboarding form should be implemented.
+11. The calculation in the API are only for the annual tax and super. Other results such as monthly tax, monthly super, gross income, net income and pay can be calculated as required.
+12. Data initialisation for the taxbrackets table is automatically done through the CommandLineRunner for the time being.
+    In the future, this could be populated by implementing a form for the bank original staff responsible to fill in the tax brackets for the year.
+    However, in an ideal world, the Australian government can have APIs which the bank and other organisations can call in real time for the tax rate and related information. Some day! :)
