@@ -4,37 +4,56 @@ import com.cloudcase.paycalcloudcase.jpa.TaxBracket;
 import com.cloudcase.paycalcloudcase.jpa.TaxBracketDataStore;
 import com.cloudcase.paycalcloudcase.json.TaxCalculationRequest;
 import com.cloudcase.paycalcloudcase.json.TaxCalculationResponse;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
+@Setter
 public class TaxCalculationService {
 
     @Autowired
     private TaxBracketDataStore taxBracketDataStore;
 
-    public TaxCalculationResponse getTaxAndSuperAmount(TaxCalculationRequest taxCalculationRequest) {
+    /**
+     * This method is used to calculate tax and super amount
+     *
+     * @param taxCalculationRequest
+     * @return
+     * @throws RuntimeException
+     */
+    public TaxCalculationResponse getTaxAndSuperAmount(TaxCalculationRequest taxCalculationRequest) throws RuntimeException {
 
-        List<TaxBracket> taxBrackets = taxBracketDataStore.taxBracketRepository.findAll();
+        List<TaxBracket> taxBrackets = taxBracketDataStore.findAll();
 
-        TaxBracket taxBracketActual = taxBrackets.stream().filter(
+        Optional<TaxBracket> taxBracketActual = taxBrackets.stream().filter(
                 taxBracket ->
-                    taxCalculationRequest.getSalaryAmount() >= taxBracket.getTaxableIncomeStart()
-                        && taxCalculationRequest.getSalaryAmount() <= taxBracket.getTaxableIncomeEnd()
-                            && taxCalculationRequest.getTaxYear() == taxBracket.getTaxYear()).findFirst().get();
+                        taxCalculationRequest.getSalaryAmount() >= taxBracket.getTaxableIncomeStart()
+                                && taxCalculationRequest.getSalaryAmount() <= taxBracket.getTaxableIncomeEnd()
+                                && taxCalculationRequest.getTaxYear() == taxBracket.getTaxYear()).findFirst();
 
-        int taxAmount = taxBracketActual.getTaxBase() + (taxCalculationRequest.getSalaryAmount() * taxBracketActual.getTaxRate()) / 100;
-        int superAnnuation = Math.toIntExact(Math.round((taxCalculationRequest.getSalaryAmount() * 10.5) / 100));
+        if (!taxBracketActual.isPresent()) {
+            throw new RuntimeException("No tax bracket found for the given salary amount and tax year");
+        }
 
+        TaxBracket taxBracket = taxBracketActual.get();
+        int taxAmount = taxBracket.getTaxBase() + (taxCalculationRequest.getSalaryAmount() * taxBracket.getTaxRate()) / 100;
+        int superAnnuation = Math.toIntExact(Math.round((taxCalculationRequest.getSalaryAmount() * 10.5) / 100)); //this rate is just for 2023 tax year. Can make this variable
+
+        String taxRate = taxBracket.getTaxRate() + "%";
+        if (taxBracket.getTaxRate() == 0) {
+            taxRate = "No tax";
+        }
         return TaxCalculationResponse.builder()
                 .annualTax(taxAmount)
                 .annualSuper(superAnnuation)
                 .taxYearGiven(taxCalculationRequest.getTaxYear())
                 .salaryAmountGiven(taxCalculationRequest.getSalaryAmount())
-                .taxBase(taxBracketActual.getTaxBase())
-                .taxRate(taxBracketActual.getTaxRate() + "%")
+                .taxBase(taxBracket.getTaxBase())
+                .taxRate(taxRate)
                 .build();
     }
 }
